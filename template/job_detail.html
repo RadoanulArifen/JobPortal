@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} at {{ job.company_name }} - Job Portal{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li><a href="{% url 'home' %}" class="hover:text-primary">Home</a></li>
+                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                <li><a href="{% url 'job_listings' %}" class="hover:text-primary">Jobs</a></li>
+                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                <li class="text-gray-900">{{ job.title }}</li>
+            </ol>
+        </nav>
+
+        <!-- Job Header -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                <div class="flex-1">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ job.title }}</h1>
+                    
+                    <div class="flex items-center text-gray-600 mb-6">
+                        <i class="fas fa-building text-primary mr-2"></i>
+                        <span class="text-lg font-semibold">{{ job.company_name }}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt text-primary mr-3 w-5"></i>
+                            <span>{{ job.location }}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-clock text-primary mr-3 w-5"></i>
+                            <span>Posted {{ job.created_at|timesince }} ago</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center text-gray-600 mb-6">
+                        <i class="fas fa-user text-primary mr-3 w-5"></i>
+                        <span>Posted by {{ job.posted_by.get_full_name|default:job.posted_by.username }}</span>
+                    </div>
+                </div>
+                
+                <div class="lg:ml-8 mt-6 lg:mt-0">
+                    {% if user.is_authenticated %}
+                        {% if user.profile.role == 'applicant' %}
+                            {% if has_applied %}
+                                <div class="text-center">
+                                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-3">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        Already Applied
+                                    </div>
+                                    <a href="{% url 'my_applications' %}" class="bg-primary text-white px-6 py-2 rounded-lg font-semibold hover:bg-secondary transition duration-200 inline-flex items-center">
+                                        <i class="fas fa-eye mr-2"></i>
+                                        View Application
+                                    </a>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'apply_to_job' job.id %}" class="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200 inline-flex items-center">
+                                    <i class="fas fa-paper-plane mr-2"></i>
+                                    Apply Now
+                                </a>
+                            {% endif %}
+                        {% elif user.profile.role == 'employee' %}
+                            <div class="text-center">
+                                <p class="text-gray-600 mb-2">You have employee access</p>
+                                <a href="/employee-admin/" class="bg-accent text-gray-900 px-6 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition duration-200 inline-flex items-center">
+                                    <i class="fas fa-cog mr-2"></i>
+                                    Admin Portal
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center">
+                            <p class="text-gray-600 mb-2">Login to apply for this job</p>
+                            <a href="{% url 'login' %}" class="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200 inline-flex items-center">
+                                <i class="fas fa-sign-in-alt mr-2"></i>
+                                Login to Apply
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2">
+                <!-- Job Description -->
+                <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Job Description</h2>
+                    <div class="prose max-w-none">
+                        <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ job.description }}</p>
+                    </div>
+                </div>
+
+                <!-- Company Information -->
+                <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">About {{ job.company_name }}</h2>
+                    <div class="text-gray-700">
+                        <p>We are a dynamic company looking for talented individuals to join our team. If you're passionate about your work and looking for a great opportunity, we'd love to hear from you.</p>
+                    </div>
+                </div>
+
+                <!-- Similar Jobs -->
+                <div class="bg-white rounded-lg shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Similar Jobs</h2>
+                    <div class="space-y-4">
+                        {% for similar_job in similar_jobs %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 hover:text-primary">
+                                            <a href="{% url 'job_detail' similar_job.id %}">{{ similar_job.title }}</a>
+                                        </h3>
+                                        <p class="text-gray-600">{{ similar_job.company_name }}</p>
+                                        <p class="text-gray-500 text-sm">{{ similar_job.location }}</p>
+                                    </div>
+                                    <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                                        {{ similar_job.created_at|timesince }} ago
+                                    </span>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-gray-600">No similar jobs found.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <!-- Job Summary -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Job Summary</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Company:</span>
+                            <span class="font-medium">{{ job.company_name }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Location:</span>
+                            <span class="font-medium">{{ job.location }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Posted:</span>
+                            <span class="font-medium">{{ job.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Job ID:</span>
+                            <span class="font-medium">#{{ job.id }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        {% if user.is_authenticated %}
+                            {% if user.profile.role == 'applicant' %}
+                                {% if has_applied %}
+                                    <div class="w-full bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg font-semibold inline-flex items-center justify-center">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        Already Applied
+                                    </div>
+                                    <a href="{% url 'my_applications' %}" class="w-full bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-secondary transition duration-200 inline-flex items-center justify-center">
+                                        <i class="fas fa-eye mr-2"></i>
+                                        View Application
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'apply_to_job' job.id %}" class="w-full bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-secondary transition duration-200 inline-flex items-center justify-center">
+                                        <i class="fas fa-paper-plane mr-2"></i>
+                                        Apply Now
+                                    </a>
+                                {% endif %}
+                                <button class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition duration-200 inline-flex items-center justify-center">
+                                    <i class="fas fa-bookmark mr-2"></i>
+                                    Save Job
+                                </button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}" class="w-full bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-secondary transition duration-200 inline-flex items-center justify-center">
+                                <i class="fas fa-sign-in-alt mr-2"></i>
+                                Login to Apply
+                            </a>
+                            <a href="{% url 'register' %}" class="w-full bg-accent text-gray-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition duration-200 inline-flex items-center justify-center">
+                                <i class="fas fa-user-plus mr-2"></i>
+                                Create Account
+                            </a>
+                        {% endif %}
+                        <button class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition duration-200 inline-flex items-center justify-center">
+                            <i class="fas fa-share mr-2"></i>
+                            Share Job
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-envelope text-primary mr-3 w-5"></i>
+                            <span>careers@company.com</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-phone text-primary mr-3 w-5"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-globe text-primary mr-3 w-5"></i>
+                            <span>www.company.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Jobs -->
+        <div class="mt-8 text-center">
+            <a href="{% url 'job_listings' %}" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition duration-200 inline-flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to All Jobs
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .prose {
+        max-width: none;
+    }
+    .prose p {
+        margin-bottom: 1rem;
+        line-height: 1.7;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if search_performed %}
+        Search Results - Job Portal
+    {% else %}
+        All Jobs - Job Portal
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                {% if search_performed %}
+                    Search Results
+                {% else %}
+                    All Job Opportunities
+                {% endif %}
+            </h1>
+            <p class="text-gray-600">
+                {% if search_performed %}
+                    Found {{ total_jobs }} job{{ total_jobs|pluralize }} matching your search criteria
+                {% else %}
+                    Browse all available job opportunities
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <form method="GET" action="{% url 'job_listings' %}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
+                        <input type="text" id="title" name="title" placeholder="e.g. Software Developer" 
+                               value="{{ search_params.title }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Company</label>
+                        <input type="text" id="company" name="company" placeholder="e.g. Google" 
+                               value="{{ search_params.company }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <input type="text" id="location" name="location" placeholder="e.g. New York" 
+                               value="{{ search_params.location }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <button type="submit" class="bg-primary text-white px-6 py-2 rounded-md hover:bg-secondary transition duration-200 inline-flex items-center">
+                        <i class="fas fa-search mr-2"></i>
+                        {% if search_performed %}
+                            Search Again
+                        {% else %}
+                            Search Jobs
+                        {% endif %}
+                    </button>
+                    {% if search_performed %}
+                        <a href="{% url 'job_listings' %}" class="text-gray-600 hover:text-primary inline-flex items-center">
+                            <i class="fas fa-times mr-2"></i>
+                            Clear Search
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Job Listings -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for job in jobs %}
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 border border-gray-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 hover:text-primary">
+                            <a href="{% url 'job_detail' job.id %}">{{ job.title }}</a>
+                        </h3>
+                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                            {{ job.created_at|timesince }} ago
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-building mr-2 text-primary"></i>
+                            <span>{{ job.company_name }}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt mr-2 text-primary"></i>
+                            <span>{{ job.location }}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {{ job.description|truncatewords:20 }}
+                    </p>
+                    
+                    <div class="flex justify-between items-center">
+                        <a href="{% url 'job_detail' job.id %}" class="text-primary hover:text-secondary font-semibold text-sm inline-flex items-center">
+                            View Details
+                            <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                        </a>
+                        {% if user.is_authenticated %}
+                            {% if user.profile.role == 'applicant' %}
+                                {% if job.id in user_applied_jobs %}
+                                    <span class="bg-green-100 text-green-700 px-4 py-2 rounded text-sm font-semibold">
+                                        <i class="fas fa-check mr-1"></i>
+                                        Applied
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'apply_to_job' job.id %}" class="bg-primary text-white px-4 py-2 rounded text-sm hover:bg-secondary transition duration-200">
+                                        Apply Now
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}" class="bg-primary text-white px-4 py-2 rounded text-sm hover:bg-secondary transition duration-200">
+                                Login to Apply
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-600 mb-2">
+                        {% if search_performed %}
+                            No jobs found matching your search
+                        {% else %}
+                            No jobs available yet
+                        {% endif %}
+                    </h3>
+                    <p class="text-gray-500">
+                        {% if search_performed %}
+                            Try adjusting your search criteria or <a href="{% url 'job_listings' %}" class="text-primary hover:text-secondary">view all jobs</a>
+                        {% else %}
+                            Check back later for new opportunities
+                        {% endif %}
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Back to Home -->
+        <div class="mt-8 text-center">
+            <a href="{% url 'home' %}" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition duration-200 inline-flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+{% endblock %} 
