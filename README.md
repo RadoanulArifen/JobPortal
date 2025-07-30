@@ -136,3 +136,21 @@ python manage.py createsuperuser
 
 # Start the development server
 python manage.py runserver
+
+```
+## 📁Folder Structure (simplified)
+JobPortal/
+├── jobportal/           # Django project settings
+├── jobs/                # Main application (models, views, forms, etc.)
+├── templates/           # HTML templates
+├── static/              # CSS/JS assets
+├── media/               # Uploaded resumes
+├── db.sqlite3           # SQLite database
+├── manage.py
+└── requirements.txt
+
+
+---
+
+Let me know if you want me to generate the `requirements.txt`, `.gitignore`, or help you deploy it online (e.g., on Render, Railway, etc.).
+
